@@ -12,8 +12,8 @@ client connects to is not part of this repository.
 
 ## Status
 
-Early development. The tunnel itself works; sign-in, the MCP server and
-published binaries are not there yet.
+Early development. The tunnel and sign-in work; the MCP server and published
+binaries are not there yet, and the hosted service is not open.
 
 ## Building
 
@@ -26,10 +26,18 @@ go build ./cmd/portmole
 ## Usage
 
 ```
-portmole http 3000 [name]
+portmole http <port> [name]   expose localhost:<port>
+portmole login                sign this machine in
+portmole logout               sign out and revoke the token
 ```
 
-`PORTMOLE_SERVER` and `PORTMOLE_TOKEN` select the server and credentials.
+The first `portmole http` signs you in if needed: it prints a link, you
+approve in the browser with your GitHub account, and the token is saved in
+your user config directory. Any port works, and each tunnel gets its own
+address, so a frontend and an API can be exposed side by side.
+
+`PORTMOLE_SERVER` points the client at another server. `PORTMOLE_TOKEN`
+supplies a token directly, for CI.
 
 ## How it works
 
