@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -21,6 +22,10 @@ import (
 	"github.com/portmole/portmole/internal/name"
 	"github.com/portmole/portmole/proto"
 )
+
+// Version is sent to the server when connecting, so that its operator can
+// see which releases are still in use. The command sets it at start-up.
+var Version = "dev"
 
 // ErrUnauthorized means the server does not accept the token: it was revoked
 // or the account is closed.
@@ -109,6 +114,7 @@ func (a *Agent) connect() (*link, error) {
 	req.Header.Set("Connection", "Upgrade")
 	req.Header.Set("Upgrade", proto.Upgrade)
 	req.Header.Set("Authorization", "Bearer "+a.token)
+	req.Header.Set("User-Agent", "portmole/"+Version+" ("+runtime.GOOS+"; "+runtime.GOARCH+")")
 	// The context only covers the dial; a server that accepts and then says
 	// nothing must not hang the caller.
 	conn.SetDeadline(time.Now().Add(15 * time.Second))

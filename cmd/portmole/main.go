@@ -28,6 +28,7 @@ const usage = `usage:
   portmole version              print the version`
 
 func main() {
+	agent.Version = mcp.Version
 	server := strings.TrimRight(os.Getenv("PORTMOLE_SERVER"), "/")
 	if server == "" {
 		server = "https://portmole.dev"
