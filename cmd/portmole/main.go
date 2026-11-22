@@ -9,11 +9,13 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/portmole/portmole/agent"
 	"github.com/portmole/portmole/internal/auth"
 	"github.com/portmole/portmole/internal/name"
 	"github.com/portmole/portmole/mcp"
+	"github.com/portmole/portmole/proto"
 )
 
 const usage = `usage:
@@ -111,12 +113,42 @@ func serve(ctx context.Context, server string, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s -> localhost:%d\n", url, port)
+	fmt.Printf("%s -> localhost:%d\n\nRequests appear below. Press Ctrl+C to close the tunnel.\n\n", url, port)
 
-	select {
-	case <-ctx.Done():
-		return nil
-	case <-a.Done():
-		return fmt.Errorf("the session with %s ended (its time limit was reached or the token was revoked); run the command again", server)
+	// shortcut: asks the server for its request log once a second, so a burst
+	// of more than the 20 it keeps is shown in part; stream them if that matters.
+	tick := time.NewTicker(time.Second)
+	defer tick.Stop()
+	var shown time.Time
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-a.Done():
+			return fmt.Errorf("the session with %s ended (its time limit was reached or the token was revoked); run the command again", server)
+		case <-tick.C:
+			logs, err := a.Requests(n, 0)
+			if err != nil {
+				continue // reconnecting; the next tick tries again
+			}
+			for _, l := range logs {
+				if l.Time.After(shown) {
+					shown = l.Time
+					fmt.Println(requestLine(l))
+				}
+			}
+		}
 	}
+}
+
+// requestLine formats one request for the terminal. The path comes from a
+// stranger, so anything that could drive the terminal is shown as "?".
+func requestLine(l proto.RequestLog) string {
+	path := strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f || (r >= 0x80 && r < 0xa0) {
+			return '?'
+		}
+		return r
+	}, l.Path)
+	return fmt.Sprintf("%s  %-7s %3d  %5d ms  %s", l.Time.Local().Format("15:04:05"), l.Method, l.Status, l.Millis, path)
 }
