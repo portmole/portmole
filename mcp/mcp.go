@@ -28,6 +28,10 @@ const tools = `[
 {"name":"tunnel_requests","description":"Show the most recent requests that reached a tunnel: time, method, path, status, duration and headers. Useful for debugging webhooks.","inputSchema":{"type":"object","properties":{"name":{"type":"string","description":"Tunnel name."},"limit":{"type":"integer","description":"How many requests to return, newest last."}},"required":["name"]}}
 ]`
 
+// Version is the client version, set at build time with
+// -ldflags "-X github.com/portmole/portmole/mcp.Version=1.2.3".
+var Version = "dev"
+
 type open struct {
 	port int
 	url  string
@@ -98,7 +102,7 @@ func (s *server) handle(method string, params json.RawMessage) (any, bool) {
 			// Only the tools basics are used, which every revision shares.
 			"protocolVersion": p.ProtocolVersion,
 			"capabilities":    map[string]any{"tools": map[string]any{}},
-			"serverInfo":      map[string]any{"name": "portmole", "version": "0.1.0"},
+			"serverInfo":      map[string]any{"name": "portmole", "version": Version},
 		}, true
 	case "ping":
 		return map[string]any{}, true

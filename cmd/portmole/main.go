@@ -20,7 +20,8 @@ const usage = `usage:
   portmole http <port> [name]   expose localhost:<port>
   portmole mcp                  serve the tools to a coding agent over stdio
   portmole login                sign this machine in
-  portmole logout               sign out and revoke the token`
+  portmole logout               sign out and revoke the token
+  portmole version              print the version`
 
 func main() {
 	server := strings.TrimRight(os.Getenv("PORTMOLE_SERVER"), "/")
@@ -32,6 +33,8 @@ func main() {
 
 	var err error
 	switch {
+	case len(os.Args) == 2 && (os.Args[1] == "version" || os.Args[1] == "--version"):
+		fmt.Println("portmole " + mcp.Version)
 	case len(os.Args) == 2 && os.Args[1] == "login":
 		_, err = login(ctx, server)
 	case len(os.Args) == 2 && os.Args[1] == "logout":
