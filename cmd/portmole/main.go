@@ -18,8 +18,10 @@ import (
 	"github.com/portmole/portmole/proto"
 )
 
-const usage = `usage:
-  portmole http <port> [name]   expose localhost:<port>
+const usage = `portmole gives a port on this machine a public https address.
+
+usage:
+  portmole http <port> [name]   expose localhost:<port>; runs until Ctrl+C
       --bots=<list>             automated visitors to admit: search, ai_crawlers,
                                 ai_assistants (the default), all or none
   portmole console              open, rename and close tunnels from a page on
@@ -27,7 +29,14 @@ const usage = `usage:
   portmole mcp                  serve the tools to a coding agent over stdio
   portmole login                sign this machine in
   portmole logout               sign out and revoke the token
-  portmole version              print the version`
+  portmole version              print the version
+  portmole help                 print this list
+
+examples:
+  portmole http 3000            https://<folder>-<you>.portmole.dev
+  portmole http 3000 demo       https://demo-<you>.portmole.dev
+
+docs: https://portmole.com/docs.html`
 
 func main() {
 	agent.Version = mcp.Version
@@ -52,6 +61,8 @@ func main() {
 
 	var err error
 	switch {
+	case len(os.Args) == 1 || os.Args[1] == "help" || os.Args[1] == "-h" || os.Args[1] == "--help":
+		fmt.Println(usage)
 	case len(os.Args) == 2 && (os.Args[1] == "version" || os.Args[1] == "--version"):
 		fmt.Println("portmole " + mcp.Version)
 	case len(os.Args) == 2 && os.Args[1] == "login":
@@ -67,7 +78,7 @@ func main() {
 	case len(os.Args) >= 3 && len(os.Args) <= 4 && os.Args[1] == "http":
 		err = serve(ctx, server, os.Args[2:], bots)
 	default:
-		fmt.Fprintln(os.Stderr, usage)
+		fmt.Fprintf(os.Stderr, "portmole: cannot run %q as given\n\n%s\n", strings.Join(os.Args[1:], " "), usage)
 		os.Exit(2)
 	}
 	if err != nil {

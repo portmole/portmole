@@ -52,6 +52,7 @@ portmole mcp                  serve the tools to a coding agent over stdio
 portmole login                sign this machine in
 portmole logout               sign out and revoke the token
 portmole version              print the version
+portmole help                 print this list (so does portmole alone)
 ```
 
 The first `portmole http` signs you in if needed: it prints a link, you
