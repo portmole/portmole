@@ -54,6 +54,17 @@ type args struct {
 	Limit     int    `json:"limit"`
 }
 
+// Size writes a number of bytes the way people read them.
+func Size(n int64) string {
+	switch {
+	case n >= 1<<30:
+		return fmt.Sprintf("%.1f GB", float64(n)/(1<<30))
+	case n >= 1<<20:
+		return fmt.Sprintf("%.1f MB", float64(n)/(1<<20))
+	}
+	return fmt.Sprintf("%d KB", n>>10)
+}
+
 // port accepts 3000 and 3000.0 alike; clients differ in how they write numbers.
 type port int
 
@@ -157,6 +168,9 @@ func (s *server) call(tool string, a args) (string, error) {
 			lines = append(lines, fmt.Sprintf("%s: %s -> localhost:%d", n, t.url, t.port))
 		}
 		sort.Strings(lines)
+		if used, allowance, err := s.agent.Usage(); err == nil && allowance > 0 {
+			lines = append(lines, fmt.Sprintf("Data used today: %s of %s", Size(used), Size(allowance)))
+		}
 		return strings.Join(lines, "\n"), nil
 	case "tunnel_close":
 		if _, ok := s.tunnels[a.Name]; !ok || !s.connected() {

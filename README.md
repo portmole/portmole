@@ -58,6 +58,10 @@ approve in the browser with your GitHub account, and the token is saved in
 your user config directory. Any port works, and each tunnel gets its own
 address, so a frontend and an API can be exposed side by side.
 
+While `portmole http` runs it prints each request as it arrives (time, method,
+status, duration, path), so you can watch a webhook come in. `tunnel_list`
+and the terminal both show how much of the day's data allowance is used.
+
 Without a name, the tunnel is named after the folder you run it in, so
 `~/code/My Shop` is served at `my-shop-<you>.portmole.dev` every time.
 

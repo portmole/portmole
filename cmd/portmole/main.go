@@ -113,7 +113,11 @@ func serve(ctx context.Context, server string, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s -> localhost:%d\n\nRequests appear below. Press Ctrl+C to close the tunnel.\n\n", url, port)
+	fmt.Printf("%s -> localhost:%d\n", url, port)
+	if used, allowance, err := a.Usage(); err == nil && allowance > 0 {
+		fmt.Printf("Data used today: %s of %s\n", mcp.Size(used), mcp.Size(allowance))
+	}
+	fmt.Print("\nRequests appear below. Press Ctrl+C to close the tunnel.\n\n")
 
 	// shortcut: asks the server for its request log once a second, so a burst
 	// of more than the 20 it keeps is shown in part; stream them if that matters.

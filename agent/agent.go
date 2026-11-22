@@ -236,6 +236,16 @@ func (a *Agent) Requests(name string, limit int) ([]proto.RequestLog, error) {
 	return resp.Requests, err
 }
 
+// Usage returns how many bytes the account's tunnels carried today and the
+// daily allowance. A server that does not know the question answers with an
+// error.
+func (a *Agent) Usage() (used, allowance int64, err error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	resp, err := a.roundTrip(proto.Request{Op: proto.OpUsage})
+	return resp.Used, resp.Allowance, err
+}
+
 func (a *Agent) CloseTunnel(name string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()

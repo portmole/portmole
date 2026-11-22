@@ -25,6 +25,7 @@ const (
 	OpOpen     = "open"
 	OpClose    = "close"
 	OpRequests = "requests"
+	OpUsage    = "usage" // how much of today's data allowance the account has used
 
 	// NameInUse is the Response.Error for a name another session of the same
 	// account holds; the client retries under a different name.
@@ -48,6 +49,9 @@ type Response struct {
 	URL      string       `json:"url,omitempty"`
 	Error    string       `json:"error,omitempty"`
 	Requests []RequestLog `json:"requests,omitempty"`
+	// Answer to OpUsage: bytes carried today and the daily limit.
+	Used      int64 `json:"used,omitempty"`
+	Allowance int64 `json:"allowance,omitempty"`
 }
 
 // RequestLog is one visitor request as the edge saw it, oldest first in a list.
