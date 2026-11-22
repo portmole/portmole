@@ -39,6 +39,10 @@ type Request struct {
 	// open for a name the same instance still holds on an older connection
 	// takes the tunnel over instead of failing with NameInUse.
 	Instance string `json:"instance,omitempty"`
+	// Bots says which kinds of automated visitors the tunnel admits: a
+	// comma-separated list of "search", "ai_crawlers" and "ai_assistants",
+	// or "all" or "none". Empty means the default, "ai_assistants".
+	Bots string `json:"bots,omitempty"`
 	// BasicAuth, as "user:password", makes the edge ask visitors for it.
 	BasicAuth string `json:"basic_auth,omitempty"`
 	// Limit caps the entries returned by OpRequests; 0 means all kept.

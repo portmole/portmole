@@ -22,7 +22,7 @@ import (
 )
 
 const tools = `[
-{"name":"tunnel_create","description":"Expose a local port to the internet and return its public URL. Call it once per port; a frontend and an API each get their own tunnel. If the user is not signed in, the result is a sign-in link to show them instead.","inputSchema":{"type":"object","properties":{"port":{"type":"integer","description":"Local port the app listens on."},"name":{"type":"string","description":"Name used in the address. Defaults to the project folder name."},"basic_auth":{"type":"string","description":"Optional user:password that visitors must enter."}},"required":["port"]}},
+{"name":"tunnel_create","description":"Expose a local port to the internet and return its public URL. Call it once per port; a frontend and an API each get their own tunnel. If the user is not signed in, the result is a sign-in link to show them instead.","inputSchema":{"type":"object","properties":{"port":{"type":"integer","description":"Local port the app listens on."},"name":{"type":"string","description":"Name used in the address. Defaults to the project folder name."},"basic_auth":{"type":"string","description":"Optional user:password that visitors must enter."},"allow_bots":{"type":"string","description":"Which automated visitors to admit, comma-separated: search (search engine and SEO crawlers), ai_crawlers (crawlers that collect pages for AI models and AI search), ai_assistants (AI tools fetching a page because a person asked). Or all, or none. Default: ai_assistants. Bots that are not admitted get 403, and unless search is admitted the tunnel tells search engines not to index it."}},"required":["port"]}},
 {"name":"tunnel_list","description":"List the tunnels open in this session.","inputSchema":{"type":"object","properties":{}}},
 {"name":"tunnel_close","description":"Close a tunnel.","inputSchema":{"type":"object","properties":{"name":{"type":"string","description":"Tunnel name as reported by tunnel_create or tunnel_list."}},"required":["name"]}},
 {"name":"tunnel_requests","description":"Show the most recent requests that reached a tunnel: time, method, path, status, duration and headers. Useful for debugging webhooks.","inputSchema":{"type":"object","properties":{"name":{"type":"string","description":"Tunnel name."},"limit":{"type":"integer","description":"How many requests to return, newest last."}},"required":["name"]}}
@@ -51,6 +51,7 @@ type args struct {
 	Port      port   `json:"port"`
 	Name      string `json:"name"`
 	BasicAuth string `json:"basic_auth"`
+	AllowBots string `json:"allow_bots"`
 	Limit     int    `json:"limit"`
 }
 
@@ -198,6 +199,7 @@ func (s *server) create(in args) (string, error) {
 		Port            int
 		Name, BasicAuth string
 	}{int(in.Port), in.Name, in.BasicAuth}
+	options := agent.Options{BasicAuth: in.BasicAuth, Bots: in.AllowBots}
 	if a.Port < 1 || a.Port > 65535 {
 		return "", errors.New("port must be between 1 and 65535")
 	}
@@ -226,11 +228,11 @@ func (s *server) create(in args) (string, error) {
 	}
 
 	note := ""
-	url, err := s.agent.Open(n, a.Port, a.BasicAuth)
+	url, err := s.agent.OpenWith(n, a.Port, options)
 	if err != nil && strings.Contains(err.Error(), proto.NameInUse) {
 		note = fmt.Sprintf("\nThe name %q is open from another machine on this account, so a suffix was added.", n)
 		n += "-" + name.Random(4)
-		url, err = s.agent.Open(n, a.Port, a.BasicAuth)
+		url, err = s.agent.OpenWith(n, a.Port, options)
 	}
 	if err != nil {
 		return "", err

@@ -84,10 +84,15 @@ four tools:
 
 | Tool | What it does |
 |---|---|
-| `tunnel_create` | Exposes a port and returns the address. Takes `port`, and optionally `name` and `basic_auth` (`user:password`). |
+| `tunnel_create` | Exposes a port and returns the address. Takes `port`, and optionally `name`, `basic_auth` (`user:password`) and `allow_bots`. |
 | `tunnel_list` | Lists the tunnels open in this session. |
 | `tunnel_close` | Closes one. |
 | `tunnel_requests` | Shows the latest requests that reached a tunnel, which helps when a webhook does not do what you expect. |
+
+By default a tunnel admits AI assistants fetching a page for a person and
+turns search and AI crawlers away with a 403, a `noindex` header and its own
+`robots.txt`. `allow_bots` (or `--bots=` in the terminal) takes a list of
+`search`, `ai_crawlers` and `ai_assistants`, or `all`, or `none`.
 
 If you are not signed in, `tunnel_create` returns the sign-in link for the
 agent to show you. A second port of the same project gets the port in its

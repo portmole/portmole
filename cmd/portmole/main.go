@@ -20,6 +20,8 @@ import (
 
 const usage = `usage:
   portmole http <port> [name]   expose localhost:<port>
+      --bots=<list>             automated visitors to admit: search, ai_crawlers,
+                                ai_assistants (the default), all or none
   portmole mcp                  serve the tools to a coding agent over stdio
   portmole login                sign this machine in
   portmole logout               sign out and revoke the token
@@ -32,6 +34,18 @@ func main() {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+
+	// The one flag there is; everything else is positional.
+	bots := ""
+	args := os.Args[:1]
+	for _, a := range os.Args[1:] {
+		if v, ok := strings.CutPrefix(a, "--bots="); ok {
+			bots = v
+		} else {
+			args = append(args, a)
+		}
+	}
+	os.Args = args
 
 	var err error
 	switch {
@@ -46,7 +60,7 @@ func main() {
 	case len(os.Args) == 2 && os.Args[1] == "mcp":
 		err = mcp.Serve(ctx, os.Stdin, os.Stdout, server)
 	case len(os.Args) >= 3 && len(os.Args) <= 4 && os.Args[1] == "http":
-		err = serve(ctx, server, os.Args[2:])
+		err = serve(ctx, server, os.Args[2:], bots)
 	default:
 		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(2)
@@ -71,7 +85,7 @@ func login(ctx context.Context, server string) (auth.Credentials, error) {
 	return c, nil
 }
 
-func serve(ctx context.Context, server string, args []string) error {
+func serve(ctx context.Context, server string, args []string, bots string) error {
 	port, err := strconv.Atoi(args[0])
 	if err != nil || port < 1 || port > 65535 {
 		return fmt.Errorf("invalid port %q", args[0])
@@ -109,7 +123,7 @@ func serve(ctx context.Context, server string, args []string) error {
 		return err
 	}
 	defer a.Close()
-	url, err := a.Open(n, port, "")
+	url, err := a.OpenWith(n, port, agent.Options{Bots: bots})
 	if err != nil {
 		return err
 	}

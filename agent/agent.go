@@ -27,8 +27,16 @@ import (
 var ErrUnauthorized = errors.New("portmole: the server rejected the token")
 
 type tunnel struct {
-	port      int
-	basicAuth string
+	port int
+	Options
+}
+
+// Options are the optional settings of a tunnel.
+type Options struct {
+	// BasicAuth, as "user:password", makes the edge ask visitors for it.
+	BasicAuth string
+	// Bots lists the kinds of automated visitors to admit; see proto.Request.
+	Bots string
 }
 
 // Agent holds one connection to the edge. When the connection drops it is
@@ -201,7 +209,7 @@ func (a *Agent) restore(l *link) {
 	a.use(l)
 	for name, t := range a.tunnels {
 		var resp proto.Response
-		if a.enc.Encode(proto.Request{Op: proto.OpOpen, Name: name, Instance: a.instance, BasicAuth: t.basicAuth}) != nil || a.dec.Decode(&resp) != nil {
+		if a.enc.Encode(proto.Request{Op: proto.OpOpen, Name: name, Instance: a.instance, BasicAuth: t.BasicAuth, Bots: t.Bots}) != nil || a.dec.Decode(&resp) != nil {
 			return // connection lost again; run comes back with the tunnels intact
 		}
 		if resp.Error != "" {
@@ -213,14 +221,19 @@ func (a *Agent) restore(l *link) {
 // Open exposes localhost:port under name and returns the public URL.
 // A non-empty basicAuth ("user:password") makes the edge ask visitors for it.
 func (a *Agent) Open(name string, port int, basicAuth string) (string, error) {
+	return a.OpenWith(name, port, Options{BasicAuth: basicAuth})
+}
+
+// OpenWith is Open with every option.
+func (a *Agent) OpenWith(name string, port int, o Options) (string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if _, ok := a.tunnels[name]; ok {
 		return "", fmt.Errorf("portmole: tunnel %q is already open in this session", name)
 	}
 	// Registered before the round-trip: a visitor can arrive the moment the edge accepts.
-	a.tunnels[name] = tunnel{port: port, basicAuth: basicAuth}
-	resp, err := a.roundTrip(proto.Request{Op: proto.OpOpen, Name: name, Instance: a.instance, BasicAuth: basicAuth})
+	a.tunnels[name] = tunnel{port: port, Options: o}
+	resp, err := a.roundTrip(proto.Request{Op: proto.OpOpen, Name: name, Instance: a.instance, BasicAuth: o.BasicAuth, Bots: o.Bots})
 	if err != nil {
 		delete(a.tunnels, name)
 		return "", err
