@@ -22,6 +22,8 @@ const usage = `usage:
   portmole http <port> [name]   expose localhost:<port>
       --bots=<list>             automated visitors to admit: search, ai_crawlers,
                                 ai_assistants (the default), all or none
+  portmole console              open, rename and close tunnels from a page on
+                                this machine, and watch their requests
   portmole mcp                  serve the tools to a coding agent over stdio
   portmole login                sign this machine in
   portmole logout               sign out and revoke the token
@@ -58,6 +60,8 @@ func main() {
 		if err = auth.Logout(ctx, server); err == nil {
 			fmt.Println("Signed out.")
 		}
+	case len(os.Args) == 2 && os.Args[1] == "console":
+		err = runConsole(ctx, server)
 	case len(os.Args) == 2 && os.Args[1] == "mcp":
 		err = mcp.Serve(ctx, os.Stdin, os.Stdout, server)
 	case len(os.Args) >= 3 && len(os.Args) <= 4 && os.Args[1] == "http":
@@ -86,6 +90,33 @@ func login(ctx context.Context, server string) (auth.Credentials, error) {
 	return c, nil
 }
 
+// dial connects to the server with this machine's token, signing in first
+// when there is none or the stored one was revoked.
+func dial(ctx context.Context, server string) (*agent.Agent, error) {
+	// PORTMOLE_TOKEN wins so CI and tests need no credentials file.
+	token := os.Getenv("PORTMOLE_TOKEN")
+	if token == "" {
+		c, ok := auth.Load(server)
+		if !ok {
+			var err error
+			if c, err = login(ctx, server); err != nil {
+				return nil, err
+			}
+		}
+		token = c.Token
+	}
+	a, err := agent.Dial(ctx, server, token)
+	if errors.Is(err, agent.ErrUnauthorized) && os.Getenv("PORTMOLE_TOKEN") == "" {
+		// The stored token was revoked: sign in again and retry once.
+		auth.Logout(ctx, server)
+		var c auth.Credentials
+		if c, err = login(ctx, server); err == nil {
+			a, err = agent.Dial(ctx, server, c.Token)
+		}
+	}
+	return a, err
+}
+
 func serve(ctx context.Context, server string, args []string, bots string) error {
 	port, err := strconv.Atoi(args[0])
 	if err != nil || port < 1 || port > 65535 {
@@ -99,27 +130,7 @@ func serve(ctx context.Context, server string, args []string, bots string) error
 		}
 	}
 
-	// PORTMOLE_TOKEN wins so CI and tests need no credentials file.
-	token := os.Getenv("PORTMOLE_TOKEN")
-	if token == "" {
-		c, ok := auth.Load(server)
-		if !ok {
-			if c, err = login(ctx, server); err != nil {
-				return err
-			}
-		}
-		token = c.Token
-	}
-
-	a, err := agent.Dial(ctx, server, token)
-	if errors.Is(err, agent.ErrUnauthorized) && os.Getenv("PORTMOLE_TOKEN") == "" {
-		// The stored token was revoked: sign in again and retry once.
-		auth.Logout(ctx, server)
-		var c auth.Credentials
-		if c, err = login(ctx, server); err == nil {
-			a, err = agent.Dial(ctx, server, c.Token)
-		}
-	}
+	a, err := dial(ctx, server)
 	if err != nil {
 		return err
 	}

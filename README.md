@@ -47,6 +47,7 @@ go build ./cmd/portmole
 
 ```
 portmole http <port> [name]   expose localhost:<port>
+portmole console              manage tunnels from a page on this machine
 portmole mcp                  serve the tools to a coding agent over stdio
 portmole login                sign this machine in
 portmole logout               sign out and revoke the token
@@ -61,6 +62,11 @@ address, so a frontend and an API can be exposed side by side.
 While `portmole http` runs it prints each request as it arrives (time, method,
 status, duration, path), so you can watch a webhook come in. `tunnel_list`
 and the terminal both show how much of the day's data allowance is used.
+
+`portmole console` serves a page at `http://127.0.0.1:4040` where you open a
+port, give the tunnel another name, close it, and watch its requests. The
+page answers only on this machine and refuses requests that come from any
+other site. Its tunnels close when the command stops.
 
 Without a name, the tunnel is named after the folder you run it in, so
 `~/code/My Shop` is served at `my-shop-<you>.portmole.dev` every time.
