@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a tunnel used for abuse
+    url: https://portmole.com/abuse.html
+    about: Phishing, malware or anything else harmful served from a portmole address.
+  - name: Report a security problem
+    url: https://github.com/portmole/portmole/blob/main/SECURITY.md
+    about: Privately, by email. Please do not open a public issue.

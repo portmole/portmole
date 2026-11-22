@@ -1,0 +1,61 @@
+name: Bug report
+description: Something does not work the way the README says it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems go to security@portmole.com, not here.
+        Leave tokens and passwords out of anything you paste.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what you got instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The output of `portmole version`.
+      placeholder: portmole 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: How you ran it
+      options:
+        - MCP server in Claude Code
+        - MCP server in Codex
+        - MCP server in Cursor
+        - MCP server in another client
+        - Terminal (portmole http)
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How you installed it
+      options:
+        - npx
+        - npm install -g
+        - Release download
+        - Built from source
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The error message or the tool result, as text.
+      render: text

@@ -1,0 +1,26 @@
+name: Feature request
+description: Something portmole does not do yet.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you are trying to do
+      description: The task, not the solution. What were you doing when you ran into the limit?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: If you have a tool, option or behaviour in mind, describe it here.
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - MCP tools
+        - Terminal command
+        - The hosted service (limits, addresses, sign-in)
+        - Installation and packaging
+        - Not sure
