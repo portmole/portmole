@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -91,6 +92,14 @@ func serve(ctx context.Context, server string, args []string) error {
 	}
 
 	a, err := agent.Dial(ctx, server, token)
+	if errors.Is(err, agent.ErrUnauthorized) && os.Getenv("PORTMOLE_TOKEN") == "" {
+		// The stored token was revoked: sign in again and retry once.
+		auth.Logout(ctx, server)
+		var c auth.Credentials
+		if c, err = login(ctx, server); err == nil {
+			a, err = agent.Dial(ctx, server, c.Token)
+		}
+	}
 	if err != nil {
 		return err
 	}
@@ -105,6 +114,6 @@ func serve(ctx context.Context, server string, args []string) error {
 	case <-ctx.Done():
 		return nil
 	case <-a.Done():
-		return fmt.Errorf("connection to %s lost", server)
+		return fmt.Errorf("the session with %s ended (its time limit was reached or the token was revoked); run the command again", server)
 	}
 }

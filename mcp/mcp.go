@@ -220,29 +220,44 @@ func (s *server) connect() (signIn string, err error) {
 		return "", nil
 	}
 	// PORTMOLE_TOKEN wins so CI and tests need no credentials file.
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	token := os.Getenv("PORTMOLE_TOKEN")
 	if token == "" {
-		s.mu.Lock()
-		defer s.mu.Unlock()
 		c, ok := auth.Load(s.url)
 		if !ok {
-			if s.pending == nil {
-				d, err := auth.Start(s.ctx, s.url)
-				if err != nil {
-					return "", err
-				}
-				s.pending = &d
-				go func() {
-					auth.Wait(s.ctx, s.url, d) // stores the token once approved
-					s.mu.Lock()
-					s.pending = nil
-					s.mu.Unlock()
-				}()
-			}
-			return fmt.Sprintf("Sign-in needed. Ask the user to open %s, check that the page shows the code %s, and approve. Then call tunnel_create again.", s.pending.URL, s.pending.UserCode), nil
+			return s.signIn()
 		}
 		token = c.Token
 	}
-	s.agent, err = agent.Dial(s.ctx, s.url, token)
-	return "", err
+	a, err := agent.Dial(s.ctx, s.url, token)
+	if errors.Is(err, agent.ErrUnauthorized) && os.Getenv("PORTMOLE_TOKEN") == "" {
+		// The stored token was revoked: forget it and ask for a new sign-in.
+		auth.Logout(s.ctx, s.url)
+		return s.signIn()
+	}
+	if err != nil {
+		return "", err
+	}
+	s.agent = a
+	return "", nil
+}
+
+// signIn starts a sign-in, or reuses the one in progress, and returns the
+// instructions for the user. Callers hold s.mu.
+func (s *server) signIn() (string, error) {
+	if s.pending == nil {
+		d, err := auth.Start(s.ctx, s.url)
+		if err != nil {
+			return "", err
+		}
+		s.pending = &d
+		go func() {
+			auth.Wait(s.ctx, s.url, d) // stores the token once approved
+			s.mu.Lock()
+			s.pending = nil
+			s.mu.Unlock()
+		}()
+	}
+	return fmt.Sprintf("Sign-in needed. Ask the user to open %s, check that the page shows the code %s, and approve. Then call tunnel_create again.", s.pending.URL, s.pending.UserCode), nil
 }

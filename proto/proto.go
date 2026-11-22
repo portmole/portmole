@@ -17,6 +17,11 @@ const (
 	ConnectPath = "/_portmole/connect"
 	Upgrade     = "portmole/1"
 
+	// SessionHeader, on the 101 response, is how many seconds the edge will
+	// keep the connection. A client that loses it around then stays away
+	// until it is asked for a tunnel again.
+	SessionHeader = "Portmole-Session-Seconds"
+
 	OpOpen     = "open"
 	OpClose    = "close"
 	OpRequests = "requests"
