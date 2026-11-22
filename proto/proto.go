@@ -34,6 +34,10 @@ const (
 type Request struct {
 	Op   string `json:"op"`
 	Name string `json:"name"`
+	// Instance identifies the agent process, the same across reconnects. An
+	// open for a name the same instance still holds on an older connection
+	// takes the tunnel over instead of failing with NameInUse.
+	Instance string `json:"instance,omitempty"`
 	// BasicAuth, as "user:password", makes the edge ask visitors for it.
 	BasicAuth string `json:"basic_auth,omitempty"`
 	// Limit caps the entries returned by OpRequests; 0 means all kept.

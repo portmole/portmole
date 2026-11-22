@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-// Room is left in the 63-character DNS label for "-<port>", a random suffix
-// and "-<handle>".
-const maxLen = 30
+// Room is left in the 63-character DNS label for "-<port>" (6), a random
+// suffix (5) and "-<handle>" (up to 24).
+const maxLen = 26
 
 var bad = regexp.MustCompile(`[^a-z0-9]+`)
 

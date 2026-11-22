@@ -14,7 +14,7 @@ func TestClean(t *testing.T) {
 		"___":                            "",
 		"":                               "",
 		"web (staging)":                  "web-staging",
-		strings.Repeat("a", 29) + "-bcd": strings.Repeat("a", 29),
+		strings.Repeat("a", 25) + "-bcd": strings.Repeat("a", 25),
 	} {
 		if got := Clean(in); got != want {
 			t.Errorf("Clean(%q) = %q, want %q", in, got, want)

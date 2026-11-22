@@ -64,10 +64,12 @@ func Wait(ctx context.Context, server string, d Device) (Credentials, error) {
 			Error  string `json:"error"`
 		}
 		status, err := post(ctx, server+"/api/device/token", map[string]string{"device_code": d.DeviceCode}, &out)
-		if err != nil {
-			return Credentials{}, err
-		}
 		switch {
+		case ctx.Err() != nil:
+			return Credentials{}, ctx.Err()
+		case err != nil || status == http.StatusTooManyRequests || status >= 500:
+			// A dropped request or a busy server is not a refusal; the
+			// sign-in is still waiting on the other side.
 		case status == http.StatusOK && out.Token != "":
 			c := Credentials{Server: server, Token: out.Token, Handle: out.Handle}
 			return c, save(c)

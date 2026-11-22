@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/yamux"
+	"github.com/portmole/portmole/internal/name"
 	"github.com/portmole/portmole/proto"
 )
 
@@ -35,6 +36,7 @@ type tunnel struct {
 type Agent struct {
 	ctx           context.Context
 	server, token string
+	instance      string // random, sent with every open so a reconnect can reclaim its tunnels
 
 	done      chan struct{}
 	closeOnce sync.Once
@@ -57,7 +59,7 @@ type link struct {
 // Dial connects to the edge at server (e.g. "https://portmole.dev"). The
 // agent lives until Close is called or ctx is cancelled.
 func Dial(ctx context.Context, server, token string) (*Agent, error) {
-	a := &Agent{ctx: ctx, server: server, token: token, done: make(chan struct{}), tunnels: map[string]tunnel{}}
+	a := &Agent{ctx: ctx, server: server, token: token, instance: name.Random(16), done: make(chan struct{}), tunnels: map[string]tunnel{}}
 	l, err := a.connect()
 	if err != nil {
 		return nil, err
@@ -99,6 +101,9 @@ func (a *Agent) connect() (*link, error) {
 	req.Header.Set("Connection", "Upgrade")
 	req.Header.Set("Upgrade", proto.Upgrade)
 	req.Header.Set("Authorization", "Bearer "+a.token)
+	// The context only covers the dial; a server that accepts and then says
+	// nothing must not hang the caller.
+	conn.SetDeadline(time.Now().Add(15 * time.Second))
 	if err := req.Write(conn); err != nil {
 		conn.Close()
 		return nil, err
@@ -117,6 +122,8 @@ func (a *Agent) connect() (*link, error) {
 		}
 		return nil, fmt.Errorf("portmole: server refused connection: %s: %s", resp.Status, msg)
 	}
+
+	conn.SetDeadline(time.Time{})
 
 	cfg := yamux.DefaultConfig()
 	cfg.LogOutput = io.Discard
@@ -194,7 +201,7 @@ func (a *Agent) restore(l *link) {
 	a.use(l)
 	for name, t := range a.tunnels {
 		var resp proto.Response
-		if a.enc.Encode(proto.Request{Op: proto.OpOpen, Name: name, BasicAuth: t.basicAuth}) != nil || a.dec.Decode(&resp) != nil {
+		if a.enc.Encode(proto.Request{Op: proto.OpOpen, Name: name, Instance: a.instance, BasicAuth: t.basicAuth}) != nil || a.dec.Decode(&resp) != nil {
 			return // connection lost again; run comes back with the tunnels intact
 		}
 		if resp.Error != "" {
@@ -213,7 +220,7 @@ func (a *Agent) Open(name string, port int, basicAuth string) (string, error) {
 	}
 	// Registered before the round-trip: a visitor can arrive the moment the edge accepts.
 	a.tunnels[name] = tunnel{port: port, basicAuth: basicAuth}
-	resp, err := a.roundTrip(proto.Request{Op: proto.OpOpen, Name: name, BasicAuth: basicAuth})
+	resp, err := a.roundTrip(proto.Request{Op: proto.OpOpen, Name: name, Instance: a.instance, BasicAuth: basicAuth})
 	if err != nil {
 		delete(a.tunnels, name)
 		return "", err
