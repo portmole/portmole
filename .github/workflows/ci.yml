@@ -1,0 +1,72 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        if: matrix.os == 'ubuntu-latest'
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - run: go vet ./...
+      - run: go test ./...
+
+  # The npm packages as a release would publish them, installed from file and
+  # run, on each system people install on.
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the programs and the packages
+        run: |
+          mkdir -p dist/bin
+          for target in windows/amd64 windows/arm64 darwin/amd64 darwin/arm64 linux/amd64 linux/arm64; do
+            os=${target%/*} arch=${target#*/} ext=
+            if [ "$os" = windows ]; then ext=.exe; fi
+            CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -trimpath \
+              -ldflags "-s -w -X github.com/portmole/portmole/mcp.Version=0.0.0-ci" \
+              -o "dist/bin/portmole-$os-$arch$ext" ./cmd/portmole
+          done
+          node npm/build.js 0.0.0-ci dist/bin dist/npm
+      - name: Install from file and run
+        run: |
+          platform=$(node -p 'process.platform + "-" + process.arch')
+          mkdir try
+          (cd dist/npm/portmole && npm pack --silent --pack-destination ../../../try)
+          (cd "dist/npm/$platform" && npm pack --silent --pack-destination ../../../try)
+          cd try
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund ./portmole-0.0.0-ci.tgz "./portmole-$platform-0.0.0-ci.tgz"
+          test "$(./node_modules/.bin/portmole version)" = "portmole 0.0.0-ci"
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' |
+            ./node_modules/.bin/portmole mcp | grep -q tunnel_create
