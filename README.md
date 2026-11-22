@@ -12,12 +12,32 @@ client connects to is not part of this repository.
 
 ## Status
 
-Early development. The tunnel, sign-in and the MCP server work; published
-binaries are not there yet, and the hosted service is not open.
+Early development. The tunnel, sign-in and the MCP server work. The hosted
+service is not open yet, and the npm packages and downloads below arrive with
+the first tagged release.
 
-## Building
+## Installing
 
-Needs Go 1.22 or newer.
+With Node 18 or newer, nothing needs installing to use it from an agent:
+
+```
+npx -y portmole mcp
+```
+
+To have the `portmole` command in your terminal:
+
+```
+npm install -g portmole
+```
+
+npm picks the program built for your machine: Windows, macOS or Linux, x64 or
+arm64. No install script runs.
+
+Without Node, download the archive for your platform from the
+[releases page](https://github.com/portmole/portmole/releases), check it
+against `SHA256SUMS`, and put `portmole` somewhere on your `PATH`.
+
+From source, with Go 1.22 or newer:
 
 ```
 go build ./cmd/portmole
@@ -30,6 +50,7 @@ portmole http <port> [name]   expose localhost:<port>
 portmole mcp                  serve the tools to a coding agent over stdio
 portmole login                sign this machine in
 portmole logout               sign out and revoke the token
+portmole version              print the version
 ```
 
 The first `portmole http` signs you in if needed: it prints a link, you
@@ -48,8 +69,11 @@ supplies a token directly, for CI.
 `portmole mcp` is an MCP server over stdio. In Claude Code:
 
 ```
-claude mcp add portmole -- portmole mcp
+claude mcp add portmole -- npx -y portmole mcp
 ```
+
+If you installed the command, `portmole mcp` in place of `npx -y portmole mcp`
+starts a little faster.
 
 Other clients take the same command in their MCP settings. The agent then has
 four tools:
@@ -72,6 +96,18 @@ yamux. Each request arriving at your public address becomes a stream that the
 client pipes to `localhost:<port>`. Nothing listens on your machine and no
 elevated permissions are needed. See [proto/proto.go](proto/proto.go) for the
 wire format.
+
+## Releases
+
+A release is a tag: pushing `v1.2.3` makes the
+[release workflow](.github/workflows/release.yml) build the six programs,
+publish them with their checksums on the releases page, and publish the same
+version to npm. `portmole version` prints the version a program was built
+from, or `dev` for a build from source.
+
+Bugs and ideas go to the [issue tracker](https://github.com/portmole/portmole/issues);
+see [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go to
+security@portmole.com, as [SECURITY.md](SECURITY.md) describes.
 
 ## License
 
