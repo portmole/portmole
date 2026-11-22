@@ -3,10 +3,17 @@
   "version": "0.0.1",
   "description": "MCP-first dev tunnel: expose a local port to the internet from your coding agent.",
   "license": "Apache-2.0",
-  "homepage": "https://portmole.dev",
+  "homepage": "https://portmole.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/portmole/portmole.git"
   },
-  "keywords": ["tunnel", "mcp", "localhost", "ngrok-alternative"]
+  "keywords": ["tunnel", "mcp", "localhost", "ngrok-alternative"],
+  "bin": {
+    "portmole": "bin/portmole.js"
+  },
+  "files": ["bin"],
+  "engines": {
+    "node": ">=18"
+  }
 }
