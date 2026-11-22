@@ -10,24 +10,45 @@ package proto
 import (
 	"errors"
 	"io"
+	"time"
 )
 
 const (
 	ConnectPath = "/_portmole/connect"
 	Upgrade     = "portmole/1"
 
-	OpOpen  = "open"
-	OpClose = "close"
+	OpOpen     = "open"
+	OpClose    = "close"
+	OpRequests = "requests"
+
+	// NameInUse is the Response.Error for a name another session of the same
+	// account holds; the client retries under a different name.
+	NameInUse = "tunnel name is in use by another session"
 )
 
 type Request struct {
 	Op   string `json:"op"`
 	Name string `json:"name"`
+	// BasicAuth, as "user:password", makes the edge ask visitors for it.
+	BasicAuth string `json:"basic_auth,omitempty"`
+	// Limit caps the entries returned by OpRequests; 0 means all kept.
+	Limit int `json:"limit,omitempty"`
 }
 
 type Response struct {
-	URL   string `json:"url,omitempty"`
-	Error string `json:"error,omitempty"`
+	URL      string       `json:"url,omitempty"`
+	Error    string       `json:"error,omitempty"`
+	Requests []RequestLog `json:"requests,omitempty"`
+}
+
+// RequestLog is one visitor request as the edge saw it, oldest first in a list.
+type RequestLog struct {
+	Time    time.Time         `json:"time"`
+	Method  string            `json:"method"`
+	Path    string            `json:"path"`
+	Status  int               `json:"status"`
+	Millis  int64             `json:"ms"`
+	Headers map[string]string `json:"headers,omitempty"`
 }
 
 const maxHeader = 128

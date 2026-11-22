@@ -100,7 +100,8 @@ func Dial(ctx context.Context, server, token string) (*Agent, error) {
 }
 
 // Open exposes localhost:port under name and returns the public URL.
-func (a *Agent) Open(name string, port int) (string, error) {
+// A non-empty basicAuth ("user:password") makes the edge ask visitors for it.
+func (a *Agent) Open(name string, port int, basicAuth string) (string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if _, ok := a.ports[name]; ok {
@@ -108,12 +109,20 @@ func (a *Agent) Open(name string, port int) (string, error) {
 	}
 	// Registered before the round-trip: a visitor can arrive the moment the edge accepts.
 	a.ports[name] = port
-	resp, err := a.roundTrip(proto.Request{Op: proto.OpOpen, Name: name})
+	resp, err := a.roundTrip(proto.Request{Op: proto.OpOpen, Name: name, BasicAuth: basicAuth})
 	if err != nil {
 		delete(a.ports, name)
 		return "", err
 	}
 	return resp.URL, nil
+}
+
+// Requests returns the most recent visitor requests of a tunnel, oldest first.
+func (a *Agent) Requests(name string, limit int) ([]proto.RequestLog, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	resp, err := a.roundTrip(proto.Request{Op: proto.OpRequests, Name: name, Limit: limit})
+	return resp.Requests, err
 }
 
 func (a *Agent) CloseTunnel(name string) error {

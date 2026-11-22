@@ -11,10 +11,13 @@ import (
 
 	"github.com/portmole/portmole/agent"
 	"github.com/portmole/portmole/internal/auth"
+	"github.com/portmole/portmole/internal/name"
+	"github.com/portmole/portmole/mcp"
 )
 
 const usage = `usage:
   portmole http <port> [name]   expose localhost:<port>
+  portmole mcp                  serve the tools to a coding agent over stdio
   portmole login                sign this machine in
   portmole logout               sign out and revoke the token`
 
@@ -34,6 +37,8 @@ func main() {
 		if err = auth.Logout(ctx, server); err == nil {
 			fmt.Println("Signed out.")
 		}
+	case len(os.Args) == 2 && os.Args[1] == "mcp":
+		err = mcp.Serve(ctx, os.Stdin, os.Stdout, server)
 	case len(os.Args) >= 3 && len(os.Args) <= 4 && os.Args[1] == "http":
 		err = serve(ctx, server, os.Args[2:])
 	default:
@@ -65,9 +70,12 @@ func serve(ctx context.Context, server string, args []string) error {
 	if err != nil || port < 1 || port > 65535 {
 		return fmt.Errorf("invalid port %q", args[0])
 	}
-	name := "app"
+	wd, _ := os.Getwd()
+	n := name.FromDir(wd)
 	if len(args) > 1 {
-		name = args[1]
+		if n = name.Clean(args[1]); n == "" {
+			return fmt.Errorf("invalid name %q", args[1])
+		}
 	}
 
 	// PORTMOLE_TOKEN wins so CI and tests need no credentials file.
@@ -87,7 +95,7 @@ func serve(ctx context.Context, server string, args []string) error {
 		return err
 	}
 	defer a.Close()
-	url, err := a.Open(name, port)
+	url, err := a.Open(n, port, "")
 	if err != nil {
 		return err
 	}
