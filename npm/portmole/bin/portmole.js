@@ -17,6 +17,13 @@ try {
   process.exit(1);
 }
 
+// A package packed without the executable bit would fail with EACCES.
+if (process.platform !== "win32") {
+  try {
+    require("fs").chmodSync(program, 0o755);
+  } catch {}
+}
+
 const result = spawnSync(program, process.argv.slice(2), { stdio: "inherit" });
 if (result.error) {
   console.error(`portmole: could not start ${program}: ${result.error.message}`);
