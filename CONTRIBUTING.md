@@ -36,6 +36,6 @@ Use the bug form at https://github.com/portmole/portmole/issues/new/choose.
 The output of `portmole version`, your operating system, and whether you used
 the MCP server or the terminal command are what we ask about first.
 
-Security problems go to security@portmole.com, not to an issue; see
+Security problems go to hello@portmole.com, not to an issue; see
 [SECURITY.md](SECURITY.md). A tunnel being used for abuse is reported at
 https://portmole.com/abuse.html.

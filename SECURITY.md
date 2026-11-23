@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Write to **security@portmole.com**. Please do not open a public issue for a
+Write to **hello@portmole.com** with "security" in the subject. Please do not open a public issue for a
 security problem.
 
 Include what you found, how to reproduce it and what an attacker could do

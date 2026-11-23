@@ -123,7 +123,7 @@ from, or `dev` for a build from source.
 
 Bugs and ideas go to the [issue tracker](https://github.com/portmole/portmole/issues);
 see [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go to
-security@portmole.com, as [SECURITY.md](SECURITY.md) describes.
+hello@portmole.com, as [SECURITY.md](SECURITY.md) describes.
 
 ## License
 
