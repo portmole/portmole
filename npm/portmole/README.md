@@ -17,7 +17,28 @@ The name defaults to the project folder. The last part is your GitHub name.
 
 ## Use it from a coding agent
 
-Nothing to install; Node 18 or newer is enough.
+Two commands, with Node 18 or newer:
+
+```
+npm install -g portmole
+portmole setup
+```
+
+`portmole setup` looks for Claude Code, Claude Desktop, Codex, Cursor,
+Windsurf and Gemini CLI on your machine, lists the ones it finds, asks which
+you want, and adds portmole to them. It gives each agent the full path of
+the program, so the agent does not have to find `npx` or anything else by
+name, which is the usual reason an agent says it failed to connect.
+`portmole setup cursor` adds it to one agent by name.
+
+If something is off, `portmole doctor` checks the program, your machine,
+the agents and the sign-in, and says what to fix. `portmole update` moves you
+to the newest version.
+
+### Or by hand, with nothing installed
+
+Each entry below starts portmole through `npx`, which fetches the newest
+version when the agent needs it.
 
 Claude Code:
 
@@ -78,6 +99,9 @@ duration, path) and runs until Ctrl+C.
 | `portmole http <port> [name]` | Open one tunnel until Ctrl+C |
 | `portmole console` | Open, rename and close tunnels from a page on this machine |
 | `portmole mcp` | Serve the tools to a coding agent over stdio |
+| `portmole setup [agent ...]` | Add portmole to the coding agents on this machine |
+| `portmole doctor` | Check the installation and say what to fix |
+| `portmole update` | Look for a newer version and install it |
 | `portmole login` / `logout` | Sign this machine in, or sign out and revoke its token |
 | `portmole status` | Show whether this machine is signed in and what the console has open |
 | `portmole version` / `help` | Print the version, or the list of commands |

@@ -24,7 +24,38 @@ if (process.platform !== "win32") {
   } catch {}
 }
 
-const result = spawnSync(program, process.argv.slice(2), { stdio: "inherit" });
+const args = process.argv.slice(2);
+
+// `portmole update` for a global install is done here and not by the
+// program: Windows does not let a running program be replaced.
+if (args.length === 1 && args[0] === "update") {
+  const path = require("path");
+  const check = spawnSync(program, ["update", "--check"], { stdio: "inherit" });
+  if (check.status !== 10) process.exit(check.status === null ? 1 : check.status);
+  // shell: npm is npm.cmd on Windows.
+  const root = spawnSync("npm", ["root", "-g"], { encoding: "utf8", shell: true });
+  const here = path.resolve(__dirname, "..", "..");
+  if (root.status !== 0 || path.resolve(root.stdout.trim()).toLowerCase() !== here.toLowerCase()) {
+    console.log(
+      "This copy was not installed with `npm install -g portmole`, so it is left alone.\n" +
+        "Started through npx, portmole is the newest version every time."
+    );
+    process.exit(0);
+  }
+  console.log("Installing it with npm...");
+  const install = spawnSync("npm", ["install", "-g", "portmole@latest"], { stdio: "inherit", shell: true });
+  if (install.status !== 0) {
+    console.error(
+      "\nportmole: npm could not install the new version. An agent session or a terminal that\n" +
+        "has portmole running keeps the program open; close those, then run `portmole update` again."
+    );
+    process.exit(1);
+  }
+  console.log("Updated. Agents pick up the new version in their next session.");
+  process.exit(0);
+}
+
+const result = spawnSync(program, args, { stdio: "inherit" });
 if (result.error) {
   console.error(`portmole: could not start ${program}: ${result.error.message}`);
   process.exit(1);

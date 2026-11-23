@@ -27,6 +27,12 @@ usage:
   portmole console              open, rename and close tunnels from a page on
                                 this machine, and watch their requests
   portmole mcp                  serve the tools to a coding agent over stdio
+  portmole setup [agent ...]    add portmole to the coding agents on this
+                                machine: claude, claude-desktop, codex, cursor,
+                                windsurf, gemini; with no name, the ones found
+  portmole doctor               check the program, this machine, the agents
+                                and the sign-in, and say what to fix
+  portmole update               look for a newer version and install it
   portmole login                sign this machine in
   portmole logout               sign out and revoke the token
   portmole status               show whether this machine is signed in and
@@ -72,6 +78,17 @@ func main() {
 	case len(os.Args) == 2 && os.Args[1] == "logout":
 		if err = auth.Logout(ctx, server); err == nil {
 			fmt.Println("Signed out.")
+		}
+	case os.Args[1] == "setup":
+		err = setup(ctx, os.Stdin, os.Stdout, os.Args[2:])
+	case len(os.Args) == 2 && os.Args[1] == "doctor":
+		if doctor(ctx, os.Stdout, server) > 0 {
+			os.Exit(1)
+		}
+	case os.Args[1] == "update" && (len(os.Args) == 2 || len(os.Args) == 3 && os.Args[2] == "--check"):
+		var exit int
+		if exit, err = update(ctx, os.Stdout, latestURL, len(os.Args) == 3); err == nil && exit != 0 {
+			os.Exit(exit)
 		}
 	case len(os.Args) == 2 && os.Args[1] == "status":
 		status(ctx, os.Stdout, server, consoleURL)

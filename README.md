@@ -48,6 +48,9 @@ go build ./cmd/portmole
 portmole http <port> [name]   expose localhost:<port>
 portmole console              manage tunnels from a page on this machine
 portmole mcp                  serve the tools to a coding agent over stdio
+portmole setup [agent ...]    add portmole to the coding agents on this machine
+portmole doctor               check the installation and say what to fix
+portmole update               look for a newer version and install it
 portmole login                sign this machine in
 portmole logout               sign out and revoke the token
 portmole status               show whether this machine is signed in
@@ -77,7 +80,13 @@ supplies a token directly, for CI.
 
 ## Using it from a coding agent
 
-`portmole mcp` is an MCP server over stdio. In Claude Code:
+With the command installed, `portmole setup` finds the coding agents on the
+machine (Claude Code, Claude Desktop, Codex, Cursor, Windsurf, Gemini CLI),
+asks which you want, and adds portmole to them with the program's full path.
+`portmole doctor` checks the result and says what to fix, and
+`portmole update` installs the newest version.
+
+By hand: `portmole mcp` is an MCP server over stdio. In Claude Code:
 
 ```
 claude mcp add portmole -- npx -y portmole mcp
