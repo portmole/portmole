@@ -12,9 +12,8 @@ client connects to is not part of this repository.
 
 ## Status
 
-Early development. The tunnel, sign-in and the MCP server work. The hosted
-service is not open yet, and the npm packages and downloads below arrive with
-the first tagged release.
+Early, and open: the hosted service runs at portmole.dev, the client is on
+npm as `portmole`, and each release has downloads for six platforms.
 
 ## Installing
 
@@ -37,7 +36,7 @@ Without Node, download the archive for your platform from the
 [releases page](https://github.com/portmole/portmole/releases), check it
 against `SHA256SUMS`, and put `portmole` somewhere on your `PATH`.
 
-From source, with Go 1.22 or newer:
+From source, with Go 1.26 or newer:
 
 ```
 go build ./cmd/portmole
