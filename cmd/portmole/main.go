@@ -29,6 +29,8 @@ usage:
   portmole mcp                  serve the tools to a coding agent over stdio
   portmole login                sign this machine in
   portmole logout               sign out and revoke the token
+  portmole status               show whether this machine is signed in and
+                                what the console has open
   portmole version              print the version
   portmole help                 print this list
 
@@ -71,6 +73,8 @@ func main() {
 		if err = auth.Logout(ctx, server); err == nil {
 			fmt.Println("Signed out.")
 		}
+	case len(os.Args) == 2 && os.Args[1] == "status":
+		status(ctx, os.Stdout, server, consoleURL)
 	case len(os.Args) == 2 && os.Args[1] == "console":
 		err = runConsole(ctx, server)
 	case len(os.Args) == 2 && os.Args[1] == "mcp":

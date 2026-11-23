@@ -51,6 +51,7 @@ portmole console              manage tunnels from a page on this machine
 portmole mcp                  serve the tools to a coding agent over stdio
 portmole login                sign this machine in
 portmole logout               sign out and revoke the token
+portmole status               show whether this machine is signed in
 portmole version              print the version
 portmole help                 print this list (so does portmole alone)
 ```
@@ -81,6 +82,13 @@ supplies a token directly, for CI.
 
 ```
 claude mcp add portmole -- npx -y portmole mcp
+```
+
+On Windows, start it through `cmd`, because Windows cannot start `npx`
+directly:
+
+```
+claude mcp add portmole -- cmd /c npx -y portmole mcp
 ```
 
 If you installed the command, `portmole mcp` in place of `npx -y portmole mcp`
