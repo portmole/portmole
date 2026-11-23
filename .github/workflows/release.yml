@@ -80,10 +80,17 @@ jobs:
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ needs.build.outputs.version }}
         # The platform packages go first, so "portmole" never points at a
         # version of them that is not there yet.
+        # A version that is already on npm is skipped, so a run that stopped
+        # halfway can be run again.
         run: |
-          for dir in dist/npm/*-*; do
-            (cd "$dir" && npm publish --access public)
+          for dir in dist/npm/*-* dist/npm/portmole; do
+            name=$(node -p "require('./$dir/package.json').name")
+            if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+              echo "$name@$VERSION is already on npm"
+            else
+              (cd "$dir" && npm publish --access public)
+            fi
           done
-          (cd dist/npm/portmole && npm publish --access public)
