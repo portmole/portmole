@@ -44,7 +44,7 @@ examples:
   portmole http 3000            https://<folder>-<you>.portmole.dev
   portmole http 3000 demo       https://demo-<you>.portmole.dev
 
-docs: https://portmole.com/docs.html`
+docs: https://portmole.com/docs`
 
 func main() {
 	agent.Version = mcp.Version
