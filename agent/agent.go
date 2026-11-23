@@ -31,6 +31,10 @@ var Version = "dev"
 // or the account is closed.
 var ErrUnauthorized = errors.New("portmole: the server rejected the token")
 
+// ErrClosed means the operator closed the account. Signing in again does not
+// help, so the stored sign-in is left alone.
+var ErrClosed = errors.New("portmole: this account has been closed by the operator, so tunnels cannot be opened; if you think this is a mistake, write to hello@portmole.com")
+
 type tunnel struct {
 	port int
 	Options
@@ -134,6 +138,9 @@ func (a *Agent) connect() (*link, error) {
 		if resp.StatusCode == http.StatusUnauthorized {
 			return nil, ErrUnauthorized
 		}
+		if resp.StatusCode == http.StatusForbidden {
+			return nil, ErrClosed
+		}
 		return nil, fmt.Errorf("portmole: server refused connection: %s: %s", resp.Status, msg)
 	}
 
@@ -194,7 +201,7 @@ func (a *Agent) run(l *link) {
 			if l, err = a.connect(); err == nil {
 				break
 			}
-			if errors.Is(err, ErrUnauthorized) {
+			if errors.Is(err, ErrUnauthorized) || errors.Is(err, ErrClosed) {
 				return
 			}
 		}
